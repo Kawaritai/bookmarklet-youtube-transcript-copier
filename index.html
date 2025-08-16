@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/72x72/1f4cb.png" type="image/png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Transcript Copier (Bookmarklet)</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.6;
+            background: #f9fafb;
+        }
+        .container {
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #111827;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 32px;
+        }
+        .bookmarklet {
+            display: inline-block;
+            background: #dc2626;
+            color: white;
+            padding: 14px 28px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 24px 0;
+            transition: background 0.2s;
+        }
+        .bookmarklet:hover {
+            background: #b91c1c;
+        }
+        .instructions {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 24px 0;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #92400e;
+        }
+        .features {
+            background: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 24px 0;
+        }
+        .features h3 {
+            margin-top: 0;
+            color: #374151;
+        }
+        ul {
+            color: #4b5563;
+        }
+        .warning {
+            background: #fef2f2;
+            border: 1px solid #f87171;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+        .config-section {
+            background: #f3f4f6;
+            padding: 24px;
+            border-radius: 8px;
+            margin-bottom: 32px;
+        }
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        select, input {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+        }
+        select:focus, input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .tooltip {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background: #9ca3af;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 16px;
+            font-size: 11px;
+            cursor: help;
+            position: relative;
+        }
+        .tooltip:hover::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            font-size: 12px;
+            z-index: 10;
+            max-width: 350px;
+            white-space: normal;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        .preview {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 YouTube Transcript Copier</h1>
+        <p class="subtitle">Bookmarklet to copy YouTube video transcripts to your clipboard</p>
+        
+        <div class="config-section">
+            <h3 style="margin-top: 0; margin-bottom: 16px;">Configuration</h3>
+            <div class="config-grid">
+                <div class="form-group">
+                    <label>
+                        Text Format
+                        <span class="tooltip" data-tip="How the transcript text should be formatted">?</span>
+                    </label>
+                    <select id="textFormat">
+                        <option value="lines" selected>Separate lines</option>
+                        <option value="lines-timestamps">Separate lines (with timestamps)</option>
+                        <option value="paragraph">Paragraph (continuous text)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        Chapter Handling
+                        <span class="tooltip" data-tip="How to handle video chapters in the transcript">?</span>
+                    </label>
+                    <select id="chapterHandling">
+                        <option value="include" selected>Include chapter titles</option>
+                        <option value="exclude">Exclude chapters</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <label style="margin-bottom: 12px; display: block;">Additional Options</label>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" id="includeMetadata" checked>
+                    <label for="includeMetadata" style="margin: 0;">Include video title and URL</label>
+                </div>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" id="autoOpenTranscript" checked>
+                    <label for="autoOpenTranscript" style="margin: 0;">Auto-open transcript panel if closed</label>
+                </div>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" id="logBehavior">
+                    <label for="logBehavior" style="margin: 0;">Log behavior to console</label>
+                </div>
+            </div>
+        </div>
+        
+        <a href="#" id="bookmarklet" class="bookmarklet">📝Copy Transcript</a>
+        
+        <div class="instructions">
+            <h3>📚 How to Install</h3>
+            <ol>
+                <li>Show your bookmarks bar (Ctrl/Cmd + Shift + B)</li>
+                <li>Drag the red "Copy YouTube Transcript" button to your bookmarks bar</li>
+                <li>Or right-click it and select "Bookmark This Link"</li>
+            </ol>
+            
+            <h3>🎯 How to Use</h3>
+            <ol>
+                <li>Go to any YouTube video page</li>
+                <li>Click the bookmarklet in your bookmarks bar</li>
+                <li>With the YouTube transcript panel open, the transcript will overwrite your clipboard. You should see a "Copied" notification on success. For larger videos, you may need to wait longer, or click again upon the full transcript being loaded. </li>
+            </ol>
+        </div>
+
+        <div class="warning">
+            <strong>Note:</strong> This bookmarklet only works on YouTube video pages that have transcripts/captions available. Auto-generated and manually created captions are both supported.
+        </div>
+    </div>
+
+    <script>
+        function generateBookmarklet() {
+            const config = {
+                textFormat: document.getElementById('textFormat').value,
+                chapterHandling: document.getElementById('chapterHandling').value,
+                includeMetadata: document.getElementById('includeMetadata').checked,
+                autoOpenTranscript: document.getElementById('autoOpenTranscript').checked,
+                logBehavior: document.getElementById('logBehavior').checked
+            };
+
+            const bookmarkletCode = `
+(function() {
+    const config = ${JSON.stringify(config)};
+    
+    function log(message, isError = false) {
+        if (config.logBehavior) {
+            if (isError) {
+                console.error(message);
+            } else {
+                console.log(message);
+            }
+        }
+    }
+    
+    function showCopiedIndicator() {
+        const transcriptTitle = document.querySelector('ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-searchable-transcript"] #title-text');
+        if (!transcriptTitle) return;
+        
+        const indicator = document.createElement('span');
+        indicator.textContent = ' ✅ Copied';
+        indicator.style.cssText = 'font-size:12px;font-weight:400;color:#065f46;background:#d1fae5;padding:2px 6px;border-radius:4px;margin-left:6px;opacity:1;transition:opacity 0.5s ease-out;vertical-align:middle;';
+        transcriptTitle.appendChild(indicator);
+        
+        setTimeout(() => {
+            indicator.style.opacity = '0';
+            setTimeout(() => indicator.remove(), 500);
+        }, 2000);
+    }
+    
+    function openTranscriptPanel() {
+        return new Promise((resolve) => {
+            const showTranscriptBtn = document.querySelector('ytd-video-description-transcript-section-renderer button[aria-label*="transcript"], ytd-video-description-transcript-section-renderer button[aria-label*="Show transcript"]');
+            
+            if (showTranscriptBtn && !showTranscriptBtn.getAttribute('aria-pressed')) {
+                showTranscriptBtn.click();
+                
+                const observer = new MutationObserver(() => {
+                    const transcriptPanel = document.querySelector('ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-searchable-transcript"]');
+                    if (transcriptPanel && transcriptPanel.style.display !== 'none') {
+                        observer.disconnect();
+                        setTimeout(resolve, 500);
+                    }
+                });
+                
+                const panelsContainer = document.querySelector('#panels');
+                if (panelsContainer) {
+                    observer.observe(panelsContainer, { childList: true, subtree: true });
+                }
+                
+                setTimeout(() => { observer.disconnect(); resolve(); }, 3000);
+            } else {
+                resolve();
+            }
+        });
+    }
+    
+    function extractTranscript() {
+        const transcriptContainer = document.querySelector('ytd-transcript-segment-list-renderer #segments-container');
+        if (!transcriptContainer) return null;
+        
+        const elements = transcriptContainer.children;
+        let sections = [];
+        let currentSection = [];
+        
+        for (let element of elements) {
+            if (element.tagName === 'YTD-TRANSCRIPT-SECTION-HEADER-RENDERER' && config.chapterHandling === 'include') {
+                if (currentSection.length > 0) {
+                    if (config.textFormat === 'lines' || config.textFormat === 'lines-timestamps') {
+                        sections.push(currentSection.join('\\n'));
+                    } else {
+                        sections.push(currentSection.join(' '));
+                    }
+                    currentSection = [];
+                }
+                
+                const chapterTitle = element.querySelector('h2 > span')?.textContent?.trim();
+                if (chapterTitle) {
+                    sections.push('# ' + chapterTitle);
+                }
+            } else if (element.tagName === 'YTD-TRANSCRIPT-SEGMENT-RENDERER') {
+                const timeElement = element.querySelector('.segment-timestamp');
+                const textElement = element.querySelector('.segment-text');
+                if (textElement) {
+                    const text = textElement.innerText.trim();
+                    if (config.textFormat === 'lines-timestamps' && timeElement) {
+                        const time = timeElement.textContent.trim();
+                        currentSection.push(time + ' ' + text);
+                    } else {
+                        currentSection.push(text);
+                    }
+                }
+            }
+        }
+        
+        if (currentSection.length > 0) {
+            if (config.textFormat === 'lines' || config.textFormat === 'lines-timestamps') {
+                sections.push(currentSection.join('\\n'));
+            } else {
+                sections.push(currentSection.join(' '));
+            }
+        }
+        
+        let transcript;
+        if (config.textFormat === 'lines' || config.textFormat === 'lines-timestamps') {
+            transcript = sections.join('\\n\\n');
+        } else {
+            transcript = sections.join(' ');
+        }
+        
+        let result = '';
+        
+        if (config.includeMetadata) {
+            const title = document.querySelector('h1.ytd-watch-metadata yt-formatted-string')?.textContent?.trim();
+            if (title) {
+                result += title + '\\n';
+            }
+            result += 'Source: ' + window.location.href + '\\n\\n';
+        }
+        
+        result += transcript;
+        return result;
+    }
+    
+    async function copyTranscript() {
+        try {
+            if (!window.location.hostname.includes('youtube.com')) {
+                log('This bookmarklet only works on YouTube video pages.', true);
+                return;
+            }
+            
+            if (config.autoOpenTranscript) {
+                await openTranscriptPanel();
+            }
+            
+            const transcript = extractTranscript();
+            
+            if (!transcript) {
+                log('No transcript found. Make sure the video has captions/subtitles available and the transcript panel is open.', true);
+                return;
+            }
+            
+            await navigator.clipboard.writeText(transcript);
+            log('Transcript copied to clipboard! (' + transcript.length + ' characters)');
+            showCopiedIndicator();
+            
+        } catch (err) {
+            log('Failed to copy transcript: ' + err.message, true);
+        }
+    }
+    
+    copyTranscript();
+})();
+            `.trim();
+
+            return 'javascript:' + encodeURIComponent(bookmarkletCode);
+        }
+
+        function updateBookmarklet() {
+            const bookmarkletLink = document.getElementById('bookmarklet');
+            bookmarkletLink.href = generateBookmarklet();
+        }
+
+        // Update bookmarklet when any configuration changes
+        document.querySelectorAll('select, input').forEach(element => {
+            element.addEventListener('change', updateBookmarklet);
+        });
+
+        // Initial generation
+        updateBookmarklet();
+    </script>
+</body>
+</html>
